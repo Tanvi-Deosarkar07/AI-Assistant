@@ -49,7 +49,7 @@ with tab1:
 
     if st.button("Explore!"):
         with st.spinner("Finding the coolest answer... 🚀"):
-            prompt = f"Explain to a school student in under 100 words, in a fun and simple way if possible provide the visualization/image: {curious_question}"
+            prompt = f"Explain to a school student in under 100 words, in a fun and simple way: {curious_question}"
             response = model.generate_content(prompt)
             st.success(response.text)
 
@@ -68,7 +68,7 @@ with tab2:
         if st.button("Get Answer"):
             if question:
                 with st.spinner("Thinking..."):
-                    response = model.generate_content(f"Answer this for a school student in less than 100 words if possible provide an image: {question}")
+                    response = model.generate_content(f"Answer this for a school student in less than 100 words: {question}")
                     st.success(response.text)
 
                     # Save to query history
