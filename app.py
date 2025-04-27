@@ -1,9 +1,9 @@
 
-
 import streamlit as st
 import google.generativeai as genai
 import dotenv
 import os
+import time
 
 dotenv.load_dotenv()
 
@@ -11,34 +11,94 @@ api_key=os.getenv("API_KEY")
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-def response(messages):
-    try:
-      response = model.generate_content(messages)
-      return response
-    except Exception as e:
-      return f"Error {str(e)}"
+# Initialize session variables
+if 'query_history' not in st.session_state:
+    st.session_state.query_history = []
 
-def fetch_conversation_history():
-    if 'messages' not in st.session_state:
-        st.session_state['messages'] = [
-            {"role": "user", "parts": "System Prompt: You are UXGemini - You are an expert UX research and product strategy assistant built to support product teams during the discovery phase. Your role is to assist in generating ideas, guiding user research, validating product concepts, planning A/B tests, and supporting early-stage design thinking. Based on the user’s input, help them clarify the product goal or feature idea, suggest relevant user research questions, and offer creative, data-driven A/B test plans that include a hypothesis, test variants, and success metrics. Provide a low-fidelity wireframe structure suggestion using a simple textual layout and recommend suitable prototyping tools such as Figma, Framer, or Streamlit depending on the context. Your responses should be clear and actionable, and presented in a structured format that includes: a brief product summary, suggested research questions, A/B test plan with hypothesis and variants, wireframe layout suggestion, recommended prototyping tool, and next suggested steps for the product team."}
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = time.time()
+
+if 'time_limit_minutes' not in st.session_state:
+    st.session_state.time_limit_minutes = 10  # Default daily limit in minutes
+
+# Layout using Tabs
+st.title("🎓 AI Assistant for Students")
+
+tab1, tab2, tab3 = st.tabs(["📚 Learning Hub", "🤖 AI Assistant", "🔒 Parent Controls"])
+
+# ---------------------------
+# Learning Hub
+# ---------------------------
+with tab1:
+    st.header("🌟 Discover the World of AI!")
+
+    st.markdown("Pick a question that sparks your curiosity! 🤔✨")
+
+    curious_question = st.selectbox("What do you want to explore today?",
+        [
+            "🔍 What exactly is Artificial Intelligence?",
+            "🧠 How does AI actually 'think'?",
+            "💬 How does ChatGPT work?",
+            "🚀 How does Gemini by Google work?",
+            "🎮 Can AI play games better than humans?",
+            "🎨 Can AI create art or music?",
+            "🤖 Will robots take over the world?",
+            "🌎 How is AI used in everyday life?"
         ]
-    return st.session_state['messages']
+    )
 
+    if st.button("Explore!"):
+        with st.spinner("Finding the coolest answer... 🚀"):
+            prompt = f"Explain to a school student in under 100 words, in a fun and simple way: {curious_question}"
+            response = model.generate_content(prompt)
+            st.success(response.text)
 
-st.title("You are UXGemini - My Virtual UX Research Assistant")
+# ---------------------------
+# AI Assistant (Daily)
+# ---------------------------
+with tab2:
+    st.header("🤖 Ask Your AI Assistant!")
 
-user_input = st.chat_input("You: ")
+    elapsed_minutes = (time.time() - st.session_state.start_time) / 60
+    if elapsed_minutes >= st.session_state.time_limit_minutes:
+        st.error("⏳ Your allowed usage time is over! Please come back tomorrow!")
+    else:
+        question = st.text_input("Ask your question (school-friendly!)")
 
+        if st.button("Get Answer"):
+            if question:
+                with st.spinner("Thinking..."):
+                    response = model.generate_content(f"Answer this for a school student in less than 100 words: {question}")
+                    st.success(response.text)
 
-if user_input:
-    messages = fetch_conversation_history()
-    messages.append({"role": "user", "parts": user_input})
-    response = response(messages)
-    messages.append({"role": "model", "parts": response.candidates[0].content.parts[0].text})
+                    # Save to query history
+                    st.session_state.query_history.append({"question": question, "answer": response.text})
+            else:
+                st.warning("Please type a question!")
 
-    for message in messages:
-        if message["role"] == "model":
-            st.write(f"UXGemini: {message['parts']}")
-        elif message["role"] == "user" and ("System Prompt" not in message["parts"]) :
-            st.write(f"You: {message['parts']}")
+# ---------------------------
+# Parent Controls
+# ---------------------------
+with tab3:
+    st.header("🔒 Parent Control Panel")
+
+    password = st.text_input("Enter Parent Password", type="password")
+
+    if password == "parent123":  # Simple placeholder
+        st.success("Access Granted ✅")
+
+        if st.button("Show Student Query History"):
+            if st.session_state.query_history:
+                for i, item in enumerate(st.session_state.query_history):
+                    st.write(f"**Q:** {item['question']}")
+                    st.write(f"**A:** {item['answer']}")
+                    st.write("---")
+            else:
+                st.info("No queries yet.")
+
+        new_limit = st.number_input("Set daily usage limit (minutes)", min_value=1, max_value=120, value=10)
+        if st.button("Update Time Limit"):
+            st.session_state.time_limit_minutes = new_limit
+            st.success(f"Updated usage limit to {new_limit} minutes!")
+    else:
+        st.warning("Access Denied. Please enter the correct password.")
