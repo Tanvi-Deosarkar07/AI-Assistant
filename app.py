@@ -22,7 +22,7 @@ if 'time_limit_minutes' not in st.session_state:
     st.session_state.time_limit_minutes = 10  # Default daily limit in minutes
 
 # Layout using Tabs
-st.title("🎓 AI Assistant for Students")
+st.title("🎓 Pico - Your AI learning buddy")
 
 tab1, tab2, tab3 = st.tabs(["📚 Learning Hub", "🤖 AI Assistant", "🔒 Parent Controls"])
 
@@ -49,7 +49,7 @@ with tab1:
 
     if st.button("Explore!"):
         with st.spinner("Finding the coolest answer... 🚀"):
-            prompt = f"Explain to a school student in under 100 words, in a fun and simple way: {curious_question}"
+            prompt = f"Explain to a school student in under 100 words, in a fun and simple way if possible provide the visualization/image: {curious_question}"
             response = model.generate_content(prompt)
             st.success(response.text)
 
@@ -57,18 +57,18 @@ with tab1:
 # AI Assistant (Daily)
 # ---------------------------
 with tab2:
-    st.header("🤖 Ask Your AI Assistant!")
+    st.header("🤖 Ask Pico")
 
     elapsed_minutes = (time.time() - st.session_state.start_time) / 60
     if elapsed_minutes >= st.session_state.time_limit_minutes:
         st.error("⏳ Your allowed usage time is over! Please come back tomorrow!")
     else:
-        question = st.text_input("Ask your question (school-friendly!)")
+        question = st.text_input("What do you want to know buddy?")
 
         if st.button("Get Answer"):
             if question:
                 with st.spinner("Thinking..."):
-                    response = model.generate_content(f"Answer this for a school student in less than 100 words: {question}")
+                    response = model.generate_content(f"Answer this for a school student in less than 100 words if possible provide an image: {question}")
                     st.success(response.text)
 
                     # Save to query history
